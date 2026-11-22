@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>AquaCool — mon aquarium</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="theme-color" content="#bfe8f7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AquaCool">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=DotGothic16&family=M+PLUS+Rounded+1c:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap"><canvas id="game"></canvas>
+  <button class="bubble" id="menuBtn" aria-label="Menu">☰</button>
+  <div id="hudR">
+    <span class="pill" id="lvl">☆ Niv. 1 <span class="xpbar"><i id="xpFill"></i></span></span>
+    <span class="pill" id="coins">◎ 0</span>
+    <span class="pill" id="pearls" title="Perles : laissées par les visiteurs">✧ 0</span>
+  </div>
+  <div id="drawer">
+    <div class="dhead"><div class="logo"><span class="kao">( ˶ˆᗜˆ˵ )</span> AquaCool</div><div class="drow"><span class="pill" id="dexCount">✿ 0/0</span><span class="pill" id="clock">--</span></div></div>
+    <div class="bubs">
+      <button class="bub" id="bDex"><span class="ic bubble">✿</span><span class="lb">Collection</span></button>
+      <button class="bub" id="bRes"><span class="ic bubble">⌂</span><span class="lb">Résidents</span></button>
+      <button class="bub" id="bFood"><span class="ic bubble">◒</span><span class="lb">Mangeoire</span></button>
+      <button class="bub" id="bJournal"><span class="ic bubble">✎</span><span class="lb">Journal</span></button>
+      <button class="bub" id="bDress"><span class="ic bubble">♡</span><span class="lb">Dressing</span></button>
+      <button class="bub" id="bQuest"><span class="ic bubble">☆</span><span class="lb">Quêtes</span></button>
+      <button class="bub" id="bShop"><span class="ic bubble">¥</span><span class="lb">Boutique</span></button>
+      <button class="bub" id="bDeco"><span class="ic bubble">❀</span><span class="lb">Déco</span></button>
+      <button class="bub" id="bMg"><span class="ic bubble">✦</span><span class="lb">Mini-jeux</span></button>
+      <button class="bub" id="bPhoto"><span class="ic bubble">◉</span><span class="lb">Photo</span></button>
+      <button class="bub" id="bAlbum"><span class="ic bubble">▤</span><span class="lb">Album</span></button>
+      <button class="bub" id="bSound"><span class="ic bubble">♪</span><span class="lb">Son</span></button>
+      <button class="bub" id="bMusic"><span class="ic bubble">♫</span><span class="lb">Musique</span></button>
+      <button class="bub" id="bHelp"><span class="ic bubble">？</span><span class="lb">Aide</span></button>
+    </div>
+  </div>
+  <div id="hint">☞ Glisse pour explorer l'aquarium ↔</div>
+  <div id="decoBar" hidden>
+    <div class="dtop"><span id="decoTitle">❀ Déco</span><span class="dtip">Glisse un objet dans l'aquarium · ramène-le ici pour le ranger</span><span id="decoTrash" class="bubble">↩</span><button class="btn sm g" id="bDecoDone">✓ Terminé</button></div>
+    <div class="tray" id="chips"></div>
+  </div>
+  <div id="ticker"></div>
+  <div id="tanks" hidden></div>
+</div>
+
+<div class="modal" id="mRes"><div class="box"><div class="head"><h2>⌂ Mes résidents</h2><button class="btn" data-close>✕</button></div><div id="resBody"></div></div></div>
+<div class="modal" id="mDex"><div class="box"><div class="head"><div id="dexHead"></div><button class="btn" data-close>✕</button></div><div id="dexBody"></div></div></div>
+<div class="modal" id="mDress"><div class="box"><div class="head"><h2>♡ Dressing</h2><button class="btn" data-close>✕</button></div><div id="dressBody"></div></div></div>
+<div class="modal" id="mFood"><div class="box"><div class="head"><h2>◒ Mangeoire</h2><button class="btn" data-close>✕</button></div><div id="foodBody"></div></div></div>
+<div class="modal" id="mJournal"><div class="box"><div class="head"><h2>✎ Journal des visites</h2><button class="btn" data-close>✕</button></div><div id="journalBody"></div></div></div>
+<div class="modal" id="mAway"><div class="box"><div class="head"><h2 id="awayTitle">☾ Pendant ton absence…</h2><button class="btn" data-close>✕</button></div><div id="awayBody"></div></div></div>
+<div class="modal" id="mQuest"><div class="box"><div class="head"><h2>☆ Quêtes du jour</h2><button class="btn" data-close>✕</button></div><div id="questBody"></div></div></div>
+<div class="modal" id="mShop"><div class="box"><div class="head"><h2>¥ Boutique — <span id="shopCoins" class="price"></span></h2><button class="btn" data-close>✕</button></div>
+  <div class="tabs"><button class="btn sm" data-tab="deco">❀ Déco</button><button class="btn sm g" data-tab="up">✧ Améliorations</button><button class="btn sm y" data-tab="toy">ʕ•ᴥ•ʔ Jouets</button><button class="btn sm p" data-tab="th">☁ Fonds</button></div>
+  <div class="grid" id="shopGrid"></div></div></div>
+<div class="modal" id="mMg"><div class="box"><div class="head"><h2 id="mgTitle">✦ Mini-jeux</h2><button class="btn" data-close>✕</button></div>
+  <div id="mgMenu"></div>
+  <div id="mgPlay" hidden><div id="mgHud"></div><canvas id="mgc"></canvas><div id="mgEnd"></div></div></div></div>
+<div class="modal" id="mAlbum"><div class="box"><div class="head"><h2>▤ Album photo</h2><button class="btn" data-close>✕</button></div><div id="albumBody"></div></div></div>
+<div class="modal" id="mHelp"><div class="box"><div class="head"><h2>(つ✧ω✧)つ Bienvenue dans ton aquarium !</h2><button class="btn" data-close>✕</button></div>
+  <ul class="help">
+    <li>໒꒱ <b>Clique sur les poissons</b> pour les attraper et remplir ta collection (+ expérience).</li>
+    <li>↔ <b>Glisse</b> le doigt (ou la souris, la molette, les flèches du clavier) pour explorer : le Ruisseau, puis le Récif, puis les Abysses, tout dans le même aquarium. La mini-carte en bas montre où sont les poissons, et une flèche clignote si un rare est hors de l'écran.</li>
+    <li>☰ Tout le reste (collection, mangeoire, boutique…) est dans le <b>menu en haut à gauche</b>.</li>
+    <li>☆ Monte de <b>niveau</b> pour ouvrir de nouvelles zones de l'aquarium : le <b>Récif</b> (niv. 3) et les <b>Abysses</b> (niv. 6), chacune avec ses propres poissons. De la déco et des fonds se débloquent aussi.</li>
+    <li>☆ Chaque jour, <b>3 quêtes</b> te rapportent pièces et expérience.</li>
+    <li>☾ Certains poissons n'apparaissent qu'à des <b>jours et heures précis</b> (la vraie heure de ton appareil). Les indices sont dans ✿ Collection.</li>
+    <li>♡ Certains poissons ne viennent que si le bac a la bonne déco.</li>
+    <li>⌂ Invite tes poissons préférés comme <b>résidents</b>, et fais-leur des câlins (clique dessus).</li>
+    <li>◒ <b>Remplis la mangeoire</b> : tant qu'il reste de la nourriture, des poissons viennent jouer avec ta déco et tes jouets ʕ•ᴥ•ʔ, <b>même quand le jeu est fermé</b>. En repartant, ils laissent des ⊹ cadeaux sur le sable (pièces et ✧ perles). Plus ils viennent, plus ils t'aiment ♡.</li>
+    <li>ʕ•ᴥ•ʔ Certains <b>visiteurs spéciaux</b> ne viennent que pour un jouet précis… à toi de découvrir lequel !</li>
+    <li>♡ Dans le <b>Dressing</b>, achète des accessoires (nœuds, chapeaux, lunettes…) et mets-les à tes poissons résidents.</li>
+    <li>◎ Les pièces se gagnent aux ✦ mini-jeux et avec les ⊹ cadeaux des visiteurs. ◉ Prends des photos pour ton album.</li>
+  </ul>
+  <div class="row"><button class="btn p" data-close>C'est parti !</button></div></div></div>
+
+<script src="script.js"></script>
+<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}</script>
+</body>
+</html>
