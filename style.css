@@ -74,7 +74,7 @@ h3{font-size:17px;margin:18px 0 4px;font-weight:600}
 .quest.done{box-shadow:0 0 0 2.5px #a8e6cf}
 .quest .bar{width:160px;height:10px;background:#efe6fa;border-radius:10px;position:relative;margin-top:6px;overflow:hidden}
 .quest .bar i{position:absolute;left:0;top:0;bottom:0;background:#ffb3d4;border-radius:10px}
-#mgc{display:block;width:100%;max-width:720px;margin:10px auto;border-radius:22px;cursor:pointer;touch-action:none;box-shadow:0 0 0 3px #fff,0 4px 12px rgba(106,90,140,.15)}
+#mgc{display:block;margin:6px auto;image-rendering:pixelated;border-radius:22px;cursor:pointer;touch-action:none;box-shadow:0 0 0 3px #fff,0 4px 12px rgba(106,90,140,.15)}
 #mgHud{color:#d39a14;font-weight:600;margin-top:6px}
 .album{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
 .album img{width:100%;image-rendering:pixelated;border-radius:14px;border:6px solid #fff;box-shadow:0 3px 10px rgba(106,90,140,.2);cursor:pointer}
@@ -144,3 +144,13 @@ h2{font-size:32px}h3{font-size:24px}
 .inst h3{margin:0 0 4px;font-weight:400;font-size:1.25em}.inst ol{margin:0;padding-left:1.3em}.inst li{margin:3px 0}
 .inst .ico{display:inline-block;background:#e6f4fb;border-radius:6px;padding:0 6px}
 .inst-lead{margin:4px 0 6px}.inst-note{margin:8px 0 4px;opacity:.8}
+
+/* mini-jeux : menu normal, partie en plein écran */
+#mMg.playing{padding:0!important;background:#fffaf0}
+#mMg.playing .box{width:100%;max-width:none;height:100%;height:100dvh;max-height:none!important;border-radius:0;box-shadow:none;display:flex;flex-direction:column;
+ padding:calc(12px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+#mMg.playing #mgPlay{flex:1;display:flex;flex-direction:column;align-items:center;min-height:0}
+#mgPlay[hidden]{display:none!important}
+#mgHud,#mgEnd{align-self:stretch}
+#mMg.playing #mgEnd{min-height:64px}
+#gtxt{position:absolute;pointer-events:none;z-index:1}

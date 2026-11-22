@@ -11,12 +11,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="AquaCool">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=DotGothic16&family=M+PLUS+Rounded+1c:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
-<div id="wrap"><canvas id="game"></canvas>
+<div id="wrap"><canvas id="game"></canvas><canvas id="gtxt"></canvas>
   <button class="bubble" id="menuBtn" aria-label="Menu">☰</button>
   <div id="hudR">
     <span class="pill" id="lvl">☆ Niv. 1 <span class="xpbar"><i id="xpFill"></i></span></span>
@@ -97,7 +97,7 @@
   <p class="inst-note">✧ Ta partie reste sur ce téléphone. Si tu supprimes l'appli, ta partie est effacée.</p>
   <div class="row"><button class="btn p" data-close>J'ai compris !</button></div></div></div>
 
-<script src="script.js"></script>
+<script src="script.js?v=13"></script>
 <script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}</script>
 </body>
 </html>
