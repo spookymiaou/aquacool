@@ -1,6 +1,6 @@
 // AquaCool — fait marcher le jeu hors connexion
-const CACHE = 'aquacool-v18';
-const FILES = ['./', './index.html', './style.css?v=18', './script.js?v=18', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
+const CACHE = 'aquacool-v19';
+const FILES = ['./', './index.html', './style.css?v=19', './script.js?v=19', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));

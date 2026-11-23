@@ -124,7 +124,7 @@ const SPECIES=[
  {id:'aube',hab:'ruisseau',n:'Aube dorée',r:'r',sh:'long',c:{b:P.ye,d:P.or,l:P.wh,f:P.pe},cond:n=>hr(n)>=6&&hr(n)<9,hint:'6h–9h',desc:'Ses écailles captent les premiers rayons.'},
  {id:'axolotl',hab:'ruisseau',n:'Axolotl',r:'r',sh:'axolotl',c:{b:P.pk,s:P.rd,l:P.pe,f:P.pk},beh:'bottom',needs:['algue'],cond:n=>hr(n)>=12&&hr(n)<14,hint:'12h–14h',desc:'Il sourit tout le temps. Tout le temps.'},
  {id:'koi',hab:'ruisseau',n:'Koï céleste',r:'e',sh:'koi',c:{b:P.wh,s:P.rd,d:P.rd,l:P.wh,f:P.pe},cond:n=>n.getDay()===0&&hr(n)>=12&&hr(n)<15,hint:'Dimanche · 12h–15h',desc:"On dit qu'elle porte bonheur."},
- {id:'arcenciel',hab:'ruisseau',n:'Poisson arc-en-ciel',r:'e',sh:'small',rainbow:true,c:{b:P.rd,d:P.or,l:P.wh,f:P.ye},cond:n=>n.getDate()%2===0&&n.getMinutes()<10,hint:'Jours pairs · hh:00–hh:10',desc:'Change de couleur quand il est content.'},
+ {id:'arcenciel',hab:'ruisseau',n:'Poisson arc-en-ciel',r:'e',sh:'small',rainbow:true,c:{b:P.rd,d:P.or,l:P.wh,f:P.ye},cond:n=>n.getDate()%2===0&&n.getMinutes()<10,hint:'Jours pairs · 10 premières min de chaque heure',desc:'Change de couleur quand il est content.'},
  {id:'lune',hab:'ruisseau',n:"Lune d'argent",r:'l',sh:'round',sc:3,c:{b:P.lg,d:P.wh,l:P.wh,f:P.lg},glow:P.wh,cond:n=>isFullMoon(n)&&(hr(n)>=20||hr(n)<6),hint:'Les nuits de pleine lune (20h–6h)',desc:"Elle reflète la lune dans l'eau du ruisseau."},
  // ---------- RÉCIF ----------
  {id:'bernard',hab:'recif',n:"Bernard-l'ermite",r:'c',sh:'hermit',c:{b:P.or,s:P.pe,d:P.br},beh:'walk',desc:'Il cherche toujours une coquille plus grande.'},
@@ -275,7 +275,7 @@ function mkCond(spec){const tests=[],hs=[];for(const p of spec.split(' ')){let m
  else if(m=p.match(/^md(\d+)$/)){const d=+m[1];tests.push(n=>n.getDate()===d);hs.push(`le ${d===1?'1er':d} du mois`)}
  else if(p==='full'){tests.push(isFullMoon);hs.push('les nuits de pleine lune')}
  else if(p==='even'){tests.push(n=>n.getDate()%2===0);hs.push('jours pairs')}
- else if(m=p.match(/^min(\d+)-(\d+)$/)){const a=+m[1],b=+m[2];tests.push(n=>{const x=n.getMinutes();return x>=a&&x<b});hs.push(`à hh:${String(a).padStart(2,'0')}–hh:${b}`)}}
+ else if(m=p.match(/^min(\d+)-(\d+)$/)){const a=+m[1],b=+m[2];tests.push(n=>{const x=n.getMinutes();return x>=a&&x<b});hs.push(a===0?`${b} premières min de chaque heure`:`chaque heure, de la ${a}e à la ${b}e min`)}}
  const h=hs.join(' · ').replace(/^le /,'').replace(/ et le /g,' et ');return{cond:n=>tests.every(t=>t(n)),hint:h.charAt(0).toUpperCase()+h.slice(1)}}
 NEWSP.forEach(o=>{if(o.spec){const m=mkCond(o.spec);o.cond=m.cond;o.hint=m.hint}SPECIES.push(o)});
 const byId=Object.fromEntries(SPECIES.map(s=>[s.id,s]));
