@@ -102,7 +102,7 @@ const RAR={c:{n:'Commun',col:'#a59fb8',w:15,coin:2,xp:1},u:{n:'Peu commun',col:'
 const TANKS={
  ruisseau:{n:'Ruisseau',ic:'❀',lv:1,poolC:7,poolU:4,theme:'ruisseau',style:'reeds'},
  recif:{n:'Récif',ic:'ψ',lv:3,poolC:7,poolU:5,theme:'recif',style:'coral'},
- abysses:{n:'Abysses',ic:'✦',lv:6,poolC:6,poolU:4,theme:'abysses',style:'spires'}
+ abysses:{n:'Abysses',ic:'✦',lv:9,poolC:6,poolU:4,theme:'abysses',style:'spires'}
 };
 const SPECIES=[
  // ---------- RUISSEAU ----------
@@ -279,7 +279,14 @@ function mkCond(spec){const tests=[],hs=[];for(const p of spec.split(' ')){let m
  const h=hs.join(' · ').replace(/^le /,'').replace(/ et le /g,' et ');return{cond:n=>tests.every(t=>t(n)),hint:h.charAt(0).toUpperCase()+h.slice(1)}}
 NEWSP.forEach(o=>{if(o.spec){const m=mkCond(o.spec);o.cond=m.cond;o.hint=m.hint}SPECIES.push(o)});
 const byId=Object.fromEntries(SPECIES.map(s=>[s.id,s]));
+// niveau d'apparition de chaque espèce : étalé jusqu'au niveau 20
+const SPLV={};(()=>{const RG={c:[0,3],u:[1,8],r:[2,18],e:[4,19],l:[6,20]};
+ for(const t in TANKS){const L0=TANKS[t].lv;for(const r of 'curel'){const g=SPECIES.filter(s=>s.hab===t&&s.r===r).sort((a,b)=>hash(a.id+'~lv')-hash(b.id+'~lv')),n=g.length;
+  const lo=L0+RG[r][0],hi=r==='c'?L0+RG[r][1]:Math.min(20,Math.max(lo+3,RG[r][1]));
+  g.forEach((sp,i)=>{let lv;if(r==='c'){const k0=Math.max(4,Math.ceil(n*.4));lv=i<k0?L0:L0+1+Math.floor((i-k0)/Math.max(1,n-k0)*(hi-L0))}else lv=lo+Math.round(i*(hi-lo)/Math.max(1,n-1));SPLV[sp.id]=Math.min(20,lv)})}}})();
+const lvOf=sp=>SPLV[sp.id]||1,lvOk=sp=>lvOf(sp)<=S.lv;
 const resHab=sp=>sp.hab==='any'?'ruisseau':sp.hab;
+function resIds(){return[...new Set(Object.values(S.tanks).flatMap(t=>t.res))].filter(id=>byId[id])}
 const known=id=>!!(S.caught[id]||S.visits[id]);
 const CRUST=['crevette','bernard','crabe','nettoyeuse','bernardor','mante','crevabyss'];
 const CTAG={[P.pk]:'rose',[P.rd]:'rose',[P.pu]:'rose',[P.bl]:'bleu',[P.nv]:'bleu',[P.la]:'bleu',[P.ye]:'jaune',[P.or]:'jaune',[P.pe]:'jaune'};
@@ -393,7 +400,7 @@ try{const raw=JSON.parse(localStorage.getItem(KEY)||'{}');S=Object.assign(defSav
   S.lv=1;S.xp=0;S.themes=(raw.themes||[]).filter(t=>THEMES[t]&&!THEMES[t].tank);delete S.decor;delete S.res;delete S.theme;S.v=2;
   S._pendingXP=xp}
 }catch(e){S=defSave()}
-S.acc=S.acc||{};S.accOwned=S.accOwned||[];S.visits=S.visits||{};S.log=S.log||[];S.souv=S.souv||{};S.pearls=S.pearls||0;S.uidN=S.uidN||1;S.up=Object.assign({filtre:0,nourriture:0,lumiere:0,vitrine:0},S.up);for(const t in TANKS)if(!S.tanks[t])S.tanks[t]=defTanks()[t];
+S.acc=S.acc||{};delete S.resP;S.accOwned=S.accOwned||[];S.visits=S.visits||{};S.log=S.log||[];S.souv=S.souv||{};S.pearls=S.pearls||0;S.uidN=S.uidN||1;S.up=Object.assign({filtre:0,nourriture:0,lumiere:0,vitrine:0},S.up);for(const t in TANKS)if(!S.tanks[t])S.tanks[t]=defTanks()[t];
 const nextUid=()=>S.uidN++;
 for(const t in S.tanks){const tk=S.tanks[t];tk.visits=tk.visits||[];tk.gifts=tk.gifts||[];if(tk.food===undefined)tk.food=null;tk.decor.forEach(d=>{if(!d.uid)d.uid=nextUid()})}
 if(!S.v3){S.v3=true;S.pearls+=3;S.inv.carton=(S.inv.carton||0)+1;S.tanks.ruisseau.food={type:'flocons',until:Date.now()+2*36e5};S.simT=Date.now();S._v3news=true}
@@ -448,14 +455,32 @@ const ACC={
  couronne:{n:'Couronne royale',p:200,lv:8,type:'top',rows:["y.y.y","yyyyy","ypyby"],pal:{y:P.ye,p:P.pk,b:P.bl}}
 };
 const aCache={},ANCH={};
-const accSpr=id=>aCache[id]||(aCache[id]=buildHD(ACC[id].rows,ch=>ACC[id].pal[ch],OUT,[2]));
+const accSpr=id=>aCache[id]||(aCache[id]=buildHD(ACC[id].rows,ch=>ACC[id].pal[ch],ACC[id].type==='eye'?null:OUT,[2]));
 function anchor(sh){if(ANCH[sh])return ANCH[sh];const rows=SHAPES[sh];let ex=-1,ey=-1;for(const ch of ['w','k'])if(ex<0)rows.forEach((r,j)=>{const i=r.indexOf(ch);if(i>=0&&ex<0){ex=i;ey=j}});if(ex<0){ex=Math.floor(rows[0].length*.7);ey=1}
  let top=ey;for(let j=0;j<rows.length;j++){if(rows[j][ex]&&rows[j][ex]!=='.'){top=j;break}}return ANCH[sh]={ex,ey,top}}
-function drawAcc(c,sp,pxs,w,h,id){const a=ACC[id];if(!a)return;const an=anchor(sp.sh),ox=-w/2+pxs/4,oy=-h/2+pxs/4,as=pxs/2;
- if(a.type==='cheek'){c.fillStyle='#ff8fb8';c.fillRect(ox+an.ex*pxs-as*2,oy+(an.ey+1)*pxs,as*3,as*2);return}
- const A=accSpr(id),aw=A.width*pxs/4,ah=A.height*pxs/4;let x,y;
- if(a.type==='eye'){const odd=a.rows[0].length%2;const cx=ox+an.ex*pxs+(odd?pxs/2:pxs),cy=oy+an.ey*pxs+pxs/2;x=cx-aw/2;y=cy-ah/2}
- else{const cx=ox+an.ex*pxs+pxs/2,top=oy+an.top*pxs;x=cx-aw/2;y=top-ah+as*2-(a.type==='halo'?as*4:0)}
+// repère les yeux et le haut de la tête directement sur le dessin du poisson
+const AANC={};
+function accAnchor(sp){if(AANC[sp.id])return AANC[sp.id];const s=spr(sp),w=s.width,h=s.height,d=s.getContext('2d').getImageData(0,0,w,h).data;
+ const op=(x,y)=>x>=0&&y>=0&&x<w&&y<h&&d[(y*w+x)*4+3]>128,lum=(x,y)=>{const i=(y*w+x)*4;return .3*d[i]+.59*d[i+1]+.11*d[i+2]};
+ const find=(L,r)=>{const m=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(!op(x,y)||lum(x,y)>L)continue;let ok=true;for(let j=-r;j<=r&&ok;j++)for(let i=-r;i<=r;i++)if(!op(x+i,y+j)){ok=false;break}if(ok)m.push([x,y])}return m};
+ let pts=find(100,2);if(!pts.length)pts=find(120,1);
+ const seen=new Set(),cl=[];for(const p of pts){const k=p+'';if(seen.has(k))continue;const st=[p],c=[];seen.add(k);while(st.length){const [x,y]=st.pop();c.push([x,y]);for(const q of pts){const kk=q+'';if(!seen.has(kk)&&Math.abs(q[0]-x)<=1&&Math.abs(q[1]-y)<=1){seen.add(kk);st.push(q)}}}
+  cl.push({x:c.reduce((a,p)=>a+p[0],0)/c.length,y:c.reduce((a,p)=>a+p[1],0)/c.length,n:c.length})}
+ const big=cl.filter(c=>c.n>=2);const C=(big.length?big:cl).sort((a,b)=>b.x-a.x);
+ let ex,ey,pair=false;if(C.length){ex=C[0].x;ey=C[0].y;const o=C.find((c,i)=>i>0&&Math.abs(c.y-ey)<=3&&ex-c.x<w*.45&&ex-c.x>2);if(o){ex=(ex+o.x)/2;ey=(ey+o.y)/2;pair=true}}
+ else{ex=w*.72;ey=h*.4}
+ let same=0,tot=0;for(let y=0;y<h*.55;y++)for(let x=0;x<w>>1;x++){const a1=op(x,y),a2=op(w-1-x,y);if(a1||a2){tot++;if(a1===a2)same++}}const sym=tot&&same/tot>.9;
+ if(sym){ex=(w-1)/2;pair=true}
+ ex=Math.round(ex);ey=Math.round(ey);
+ const topAt=x=>{for(let y=0;y<h;y++)if(op(x,y))return y;return ey};
+ const hx=pair?ex:Math.round(ex-Math.max(2,w*.04)),top=Math.min(topAt(hx),topAt(hx-1),topAt(hx+1));
+ return AANC[sp.id]={ex,ey,hx,top,w,h,pair}}
+function drawAcc(c,sp,pxs,w,h,id){const a=ACC[id];if(!a)return;const an=accAnchor(sp),sc=w/an.w,ox=-w/2,oy=-h/2;
+ const m=Math.max(tpx(sp)/2,Math.min(2,Math.round(an.h/34*2)/2)),u=sc*m;
+ if(a.type==='cheek'){c.fillStyle='#ff8fb8';const cx=ox+(an.ex-(an.pair?0:3))*sc,cy=oy+(an.ey+3)*sc;c.fillRect(cx-3*u,cy,5*u,2*u);return}
+ const A=accSpr(id),aw=A.width*u,ah=A.height*u;let x,y;
+ if(a.type==='eye'){x=ox+(an.ex+.5)*sc-aw/2;y=oy+(an.ey+.5)*sc-ah/2}
+ else{x=ox+(an.hx+.5)*sc-aw/2;y=oy+an.top*sc-ah+3*u-(a.type==='halo'?6*u:0)}
  c.drawImage(A,Math.round(x*2)/2,Math.round(y*2)/2,aw,ah)}
 
 /* ================= CANVAS & DÉCORS ================= */
@@ -557,13 +582,13 @@ const plankton=Array.from({length:200},()=>({x:Math.random()*WWT,y:Math.random()
 const fishOf=()=>RT[S.cur].fish;
 const cam=()=>RT[S.cur].cam;
 const poolCache={};
-function dailyPool(now,tank){const k=dkey(now)+tank;if(poolCache[k])return poolCache[k];const r=mulberry(hash(k)),cf=TANKS[tank];
- const cs=shuffle(SPECIES.filter(s=>s.hab===tank&&s.r==='c'&&!s.cond),r).slice(0,cf.poolC),us=shuffle(SPECIES.filter(s=>s.hab===tank&&s.r==='u'&&!s.cond),r).slice(0,cf.poolU);
+function dailyPool(now,tank){const k=dkey(now)+tank+'|'+S.lv;if(poolCache[k])return poolCache[k];const r=mulberry(hash(k)),cf=TANKS[tank];
+ const cs=shuffle(SPECIES.filter(s=>s.hab===tank&&s.r==='c'&&!s.cond&&lvOk(s)),r).slice(0,cf.poolC),us=shuffle(SPECIES.filter(s=>s.hab===tank&&s.r==='u'&&!s.cond&&lvOk(s)),r).slice(0,cf.poolU);
  return poolCache[k]=[...cs,...us].map(s=>s.id)}
 const hasGrp=(g,tank)=>S.tanks[tank].decor.some(d=>DECOR[d.t]&&DECOR[d.t].grp===g);
 const needsOk=sp=>!sp.needs||sp.needs.every(g=>hasGrp(g,sp.hab));
 const tankOpen=t=>TANKS[t]?S.lv>=TANKS[t].lv:true;
-function eligible(now,tank){const pool=dailyPool(now,tank);return SPECIES.filter(sp=>sp.hab===tank&&(sp.cond?sp.cond(now):pool.includes(sp.id))&&needsOk(sp))}
+function eligible(now,tank){const pool=dailyPool(now,tank);return SPECIES.filter(sp=>sp.hab===tank&&lvOk(sp)&&(sp.cond?sp.cond(now):pool.includes(sp.id))&&needsOk(sp))}
 
 function yRange(sp,h){if(sp.beh==='walk')return[127,137];if(sp.beh==='bottom')return[SAND-h/2-4,SAND-h/2+1];return[Math.min(12,-OY+20)+h/2,SAND-8-h/2]}
 function spawnFish(sp,resident=false,tank=S.cur){const s=spr(sp),sc=fsc(sp),w=s.width*sc,h=s.height*sc,dir=Math.random()<.5?1:-1;const [y0,y1]=yRange(sp,h);const y=rand(y0,y1);
@@ -585,7 +610,26 @@ function addBubble(x,y,r){bubbles.push({x:x+EOX,y,r:r||(Math.random()<.7?1:2),vy
 
 /* ================= XP / QUÊTES ================= */
 function addXP(n){S.xp+=n;let up=false;while(S.xp>=need(S.lv)){S.xp-=need(S.lv);S.lv++;up=true;levelUp()}hud();return up}
-function levelUp(){const lv=S.lv,gift=2;S.pearls+=gift;const un=[];
+function unlocksAt(lv){const u=[];for(const t in TANKS)if(TANKS[t].lv===lv)u.push({ic:TANKS[t].ic,n:(t==='abysses'?'Les ':'Le ')+TANKS[t].n,k:'bac'});
+ for(const k in DECOR)if(DECOR[k].lv===lv)u.push({ic:'❀',n:DECOR[k].n,k:'déco'});for(const k in THEMES)if(THEMES[k].lv===lv)u.push({ic:'◐',n:'Fond '+THEMES[k].n,k:'fond'});
+ for(const k in ACC)if(ACC[k].lv===lv)u.push({ic:'♡',n:ACC[k].n,k:'accessoire'});
+ const fr={};for(const sp of SPECIES)if(!sp.visitOnly&&lvOf(sp)===lv)fr[sp.r]=(fr[sp.r]||0)+1;
+ const RN={c:['commun','communs'],u:['peu commun','peu communs'],r:['rare','rares'],e:['épique','épiques'],l:['légendaire secret','légendaires secrets']};
+ const fl=[];for(const r of 'curel')if(fr[r])fl.push({ic:r==='l'?'✧':'◆',n:fr[r]+' poisson'+(fr[r]>1?'s ':' ')+RN[r][fr[r]>1?1:0],k:'poisson'});return[...fl,...u]}
+const palier=lv=>lv%5===0?{coins:lv*20,pearls:5}:null;
+let lvQueue=[];
+function showLvUp(){if(!lvQueue.length)return;const lv=lvQueue[lvQueue.length-1],skip=lvQueue.length>1;lvQueue=[];const u=unlocksAt(lv),pa=palier(lv);
+ $('#lvUpBody').innerHTML=`<div class="lvbig">٩(◕‿◕)۶<br>Niveau ${lv} !</div>${skip?'<div class="sub">Tu as pris plusieurs niveaux d\'un coup ✧</div>':''}
+ <div class="lvgifts"><span class="bchip">✧ +2 perles</span>${pa?`<span class="bchip gold">☆ Cadeau de palier : +${pa.coins} ◎ et +${pa.pearls} ✧</span>`:''}</div>
+ ${u.length?'<h3>Débloqué</h3><div class="lvun">'+u.map(x=>`<span class="unl">${x.ic} ${x.n}</span>`).join('')+'</div>':''}
+ <div class="row"><button class="btn sm" id="lvSee">Voir le chemin des niveaux</button><button class="btn p" data-close>Trop bien !</button></div>`;
+ $('#lvSee').onclick=()=>{closeM($('#mLvUp'));renderLevels();openM('#mLevels')};$('#lvUpBody [data-close]').onclick=()=>{ac();closeM($('#mLvUp'))};openM('#mLvUp');SFX.level()}
+function renderLevels(){const top=Math.max(20,S.lv+3),pct=Math.round(S.xp/need(S.lv)*100);let h=`<div class="lvhead"><div class="lvnum">☆ ${S.lv}</div><div class="lvbarw"><div class="lvbar"><i style="width:${pct}%"></i></div><div class="sub">${S.xp} / ${need(S.lv)} XP · encore ${need(S.lv)-S.xp} XP pour le niveau ${S.lv+1}</div></div></div>
+ <div class="sub">Chaque niveau : +2 perles ✧ · tous les 5 niveaux : un cadeau de palier ☆</div><div class="lvpath">`;
+ for(let lv=2;lv<=top;lv++){const u=unlocksAt(lv),pa=palier(lv),st=lv<=S.lv?'done':lv===S.lv+1?'next':'lock';
+  h+=`<div class="lvrow ${st}${pa?' pal':''}"><div class="lvdot">${st==='done'?'✓':lv}</div><div class="lvc"><b>Niveau ${lv}</b>${pa?` <span class="gold">☆ +${pa.coins} ◎ · +${pa.pearls} ✧</span>`:''}<div class="lvun">${u.map(x=>`<span class="unl">${x.ic} ${x.n}</span>`).join('')||'<span class="sub">+2 perles</span>'}</div></div></div>`}
+ $('#levelsBody').innerHTML=h+'</div>';setTimeout(()=>{const n=$('#levelsBody .lvrow.next');if(n)n.scrollIntoView({block:'center'})},30)}
+function levelUp(){const lv=S.lv,gift=2;S.pearls+=gift;const un=[];const pa=palier(lv);if(pa){S.coins+=pa.coins;S.pearls+=pa.pearls}lvQueue.push(lv);setTimeout(showLvUp,900);
  for(const t in TANKS)if(TANKS[t].lv===lv)un.push('le bac '+TANKS[t].ic+' '+TANKS[t].n);
  for(const k in DECOR)if(DECOR[k].lv===lv)un.push(DECOR[k].n);
  for(const k in THEMES)if(THEMES[k].lv===lv)un.push('le fond '+THEMES[k].n);for(const k in ACC)if(ACC[k].lv===lv)un.push('♡ '+ACC[k].n);
@@ -732,7 +776,12 @@ function decorBox(d){const def=DECOR[d.t];if(def.kelp){const n=def.kelp.n||1;ret
 const NOWAVE=new Set(['crab','hermit','lobster','snail','starfish','urchin','nudi','jelly','octo','seahorse','turtle','blob']);
 function drawFish(f,cx){const X=f.x-cx;if(X<-f.w||X>W+f.w)return;const sp=f.sp,wave=!NOWAVE.has(sp.sh)&&f.state!=='caught',fr=((!wave&&f.moving&&Math.floor(f.t*(f.boost>0?12:5))%2)?'a':'')+((f.happyUntil>T||(f.blinkT&&f.blinkT>T))?'h':''),s=sp.rainbow?spr(sp,'rb'+(Math.floor(T*6)%6)+fr):spr(sp,fr),sc=fsc(sp),w=s.width*sc,h=s.height*sc;let a=1;
  if(sp.ghost)a=.35+.25*Math.sin(T*3);if(f.state==='caught')a*=Math.max(0,1-f.cAge/.6);
- ctx.globalAlpha=a;ctx.save();ctx.translate(q(X),q(f.y));if(f.dir<0)ctx.scale(-1,1);if(wave){const amp=Math.min(1.5,.4+h*.05)*(f.boost>0?1.5:1)*(f.moving?1:.4),ph=f.t*(f.boost>0?13:6.5)+f.seed,x0=q(-w/2),y0=q(-h/2);for(let i=0;i<s.width;i+=2){const u=i/s.width,off=Math.round(Math.sin(ph-u*4.2)*amp*Math.pow(1-u,1.4)*2)/2;ctx.drawImage(s,i,0,2,s.height,x0+i*sc,y0+off,2*sc,h)}}else ctx.drawImage(s,q(-w/2),q(-h/2),w,h);if(f.resident&&S.acc[sp.id])drawAcc(ctx,sp,tpx(sp),w,h,S.acc[sp.id]);ctx.restore();ctx.globalAlpha=1}
+ ctx.globalAlpha=a;ctx.save();ctx.translate(q(X),q(f.y));
+ if(f.resident){const pu=.5+.5*Math.sin(T*2.2+f.seed),R0=Math.max(w,h)*.62+2+pu*1.5,g=ctx.createRadialGradient(0,0,R0*.25,0,0,R0);
+  g.addColorStop(0,'rgba(255,244,180,.7)');g.addColorStop(.55,'rgba(255,205,230,.45)');g.addColorStop(1,'rgba(255,200,225,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,R0,R0*Math.min(1,(h+8)/(w+4)),0,0,Math.PI*2);ctx.fill();
+  for(let i=0;i<3;i++){const an=T*1.1+f.seed+i*2.094,sx=Math.cos(an)*(w/2+3),sy=Math.sin(an)*(h/2+3),tw=(Math.sin(T*5+i*1.7+f.seed)+1)/2;ctx.globalAlpha=a*(.5+.5*tw);ctx.fillStyle=i%2?'#ff9ccc':'#ffd34d';
+   const px=q(sx),py=q(sy);ctx.fillRect(px,py-1.5,.5,3.5);ctx.fillRect(px-1.5,py,3.5,.5);ctx.fillStyle='#fff';ctx.fillRect(px,py,.5,.5)}ctx.globalAlpha=a}
+ if(f.dir<0)ctx.scale(-1,1);if(wave){const amp=Math.min(1.5,.4+h*.05)*(f.boost>0?1.5:1)*(f.moving?1:.4),ph=f.t*(f.boost>0?13:6.5)+f.seed,x0=q(-w/2),y0=q(-h/2);for(let i=0;i<s.width;i+=2){const u=i/s.width,off=Math.round(Math.sin(ph-u*4.2)*amp*Math.pow(1-u,1.4)*2)/2;ctx.drawImage(s,i,0,2,s.height,x0+i*sc,y0+off,2*sc,h)}}else ctx.drawImage(s,q(-w/2),q(-h/2),w,h);if(f.resident&&S.acc[sp.id])drawAcc(ctx,sp,tpx(sp),w,h,S.acc[sp.id]);ctx.restore();ctx.globalAlpha=1}
 function draw(){const now=new Date(),tn=tintFor(now),CX=q(CAM.x),abW=zoneW(CAM.x+W/2,160)[2]||0;
  tx.setTransform(1,0,0,1,0,0);tx.clearRect(0,0,tc.width,tc.height);
  ctx.setTransform(Q,0,0,Q,0,0);ctx.imageSmoothingEnabled=false;
@@ -845,8 +894,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelec
 function fitSprite(c,s,sc){const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,c.width,c.height);const k=sc||Math.max(1,Math.floor(Math.min((c.width-4)/s.width,(c.height-4)/s.height)));x.drawImage(s,Math.floor((c.width-s.width*k)/2),Math.floor((c.height-s.height*k)/2),s.width*k,s.height*k)}
 
 /* Collection */
-function dexCard(s,now,open,pool){const g=known(s.id),R=RAR[s.r],active=open&&!s.visitOnly&&(s.cond?s.cond(now):pool.includes(s.id))&&needsOk(s),n=S.caught[s.id]||0;
- const tip=s.visitOnly?'ʕ•ᴥ•ʔ Via la mangeoire':s.r==='l'?'✧ ???':s.cond?s.hint:'au hasard';
+function dexCard(s,now,open,pool){const g=known(s.id),R=RAR[s.r],active=open&&!s.visitOnly&&lvOk(s)&&(s.cond?s.cond(now):pool.includes(s.id))&&needsOk(s),n=S.caught[s.id]||0;
+ const tip=s.visitOnly?'ʕ•ᴥ•ʔ Via la mangeoire':(!g&&!lvOk(s))?'⊘ niv. '+lvOf(s):s.r==='l'?'✧ ???':s.cond?s.hint:'au hasard';
  return `<div class="card mini ${g?'':'unk'}" style="--bc:${R.col}" ><canvas width="104" height="72" data-sp="${s.id}"></canvas>
   <div class="nm">${g?s.n:'???'}${active&&!g?' ✧':''}</div><div class="rr" style="color:${R.col}">${R.n}</div><div class="when">${tip}</div>${g?`<div class="cnt">${n?'×'+n:''}${S.photo[s.id]?' ◉':''}</div>`:''}</div>`}
 function renderDex(){const now=new Date(),n=SPECIES.filter(s=>known(s.id)).length;
@@ -856,11 +905,14 @@ function renderDex(){const now=new Date(),n=SPECIES.filter(s=>known(s.id)).lengt
  const sv=SPECIES.filter(s=>s.visitOnly);h+=`<h3>ʕ•ᴥ•ʔ Spéciaux <span class="sub">${sv.filter(s=>known(s.id)).length}/${sv.length}</span></h3><div class="grid mini">`+sv.map(s=>dexCard(s,now,true,[])).join('')+'</div>';
  $('#dexBody').innerHTML=h;
  document.querySelectorAll('#dexBody canvas').forEach(c=>{const s=byId[c.dataset.sp];fitSprite(c,spr(s,known(s.id)?'':'sil'))})}
-function renderRes(){const b=$('#resBody'),max=upv('vitrine');let h=`<div class="sub">${max} par zone · touche un poisson pour l'ajouter ou l'enlever</div>`;
- for(const [t,T0] of Object.entries(TANKS)){if(!tankOpen(t))continue;const res=S.tanks[t].res;h+=`<h3>${T0.ic} ${T0.n} <span class="sub">${res.length}/${max}</span></h3><div class="thumbs">${res.map(id=>`<canvas width="60" height="44" class="sel" data-rs="${id}" title="${byId[id].n}"></canvas>`).join('')||'<span class="sub">Personne pour l\'instant</span>'}</div>`}
- const ks=SPECIES.filter(s=>known(s.id));h+=`<h3>Mes poissons</h3><div class="thumbs">${ks.length?ks.map(s=>`<canvas width="60" height="44" data-rs="${s.id}" class="${S.tanks[resHab(s)].res.includes(s.id)?'sel':''}" title="${s.n}"></canvas>`).join(''):'<span class="sub">Attrape d\'abord des poissons !</span>'}</div>`;
- b.innerHTML=h;b.querySelectorAll('canvas[data-rs]').forEach(c=>{const sp=byId[c.dataset.rs];drawPreview(c,sp,S.acc[sp.id]);c.onclick=()=>{const rh=resHab(sp),res=S.tanks[rh].res,i=res.indexOf(sp.id);
-  if(i>=0)res.splice(i,1);else{if(!tankOpen(rh))return;if(res.length>=max){SFX.bad();say(`⌂ ${TANKS[rh].n} plein ! (vitrine dans la boutique)`);return}res.push(sp.id)}SFX.heart();syncResidents();save();renderRes()}})}
+function renderRes(){const b=$('#resBody'),max=upv('vitrine');
+ const card=(sp,sel)=>{const t=resHab(sp),T0=TANKS[t];return`<div class="rcard${sel?' sel':''}" data-rs="${sp.id}"><canvas width="60" height="44"></canvas><div class="rinfo"><b>${sp.n}</b><span class="rhab">${T0.ic} ${sp.hab==='any'?'Visiteur · va au '+T0.n:T0.n}</span></div></div>`};
+
+ let h=`<div class="sub">${max} par zone · touche un poisson pour l'ajouter ou l'enlever</div>`;
+ for(const [t,T0] of Object.entries(TANKS)){if(!tankOpen(t))continue;const res=S.tanks[t].res;h+=`<h3>${T0.ic} ${T0.n} <span class="sub">${res.length}/${max}</span></h3><div class="rgrid">${res.filter(id=>byId[id]).map(id=>card(byId[id],true)).join('')||'<span class="sub">Personne pour l\'instant</span>'}</div>`}
+ const ks=SPECIES.filter(s=>known(s.id));h+=`<h3>Mes poissons</h3><div class="rgrid">${ks.length?ks.map(s=>card(s,S.tanks[resHab(s)].res.includes(s.id))).join(''):'<span class="sub">Attrape d\'abord des poissons !</span>'}</div>`;
+ b.innerHTML=h;b.querySelectorAll('.rcard[data-rs]').forEach(el=>{const sp=byId[el.dataset.rs];drawPreview(el.querySelector('canvas'),sp,S.acc[sp.id]);el.onclick=()=>{const rh=resHab(sp),res=S.tanks[rh].res,i=res.indexOf(sp.id);
+  if(i>=0)res.splice(i,1);else{if(!tankOpen(rh)){SFX.bad();say(`⌂ Le ${TANKS[rh].n} n'est pas encore ouvert`);return}if(res.length>=max){SFX.bad();say(`⌂ ${TANKS[rh].n} plein ! (vitrine dans la boutique)`);return}res.push(sp.id)}SFX.heart();syncResidents();save();renderRes()}})}
 $('#bRes').onclick=()=>{ac();SFX.click();renderRes();openM('#mRes')};
 $('#bDex').onclick=()=>{ac();SFX.click();renderDex();openM('#mDex')};
 
@@ -872,7 +924,7 @@ function renderQuests(){ensureQuests(new Date());const lvTxt=`☆ Niveau ${S.lv}
   S.quests.list.map((q,i)=>{const done=q.prog>=q.goal;return `<div class="quest ${done?'done':''}"><div><div>${q.claimed?'✓':done?'⊹':'☆'} ${q.t}</div><div class="bar"><i style="width:${Math.round(q.prog/q.goal*100)}%"></i></div><div class="sub" style="margin:6px 0 0">${q.prog}/${q.goal} · Récompense : ${q.xp} XP + 1 ✧</div></div>
   ${q.claimed?'<span class="sub">Récupérée</span>':`<button class="btn sm p" data-claim="${i}" ${done?'':'disabled'}>Récupérer</button>`}</div>`}).join('');
  document.querySelectorAll('[data-claim]').forEach(b=>b.onclick=()=>{const q=S.quests.list[+b.dataset.claim];if(q.claimed||q.prog<q.goal)return;q.claimed=true;S.pearls+=1;SFX.buy();addXP(q.xp);save();hud();questDot();renderQuests()})}
-$('#bQuest').onclick=()=>{ac();SFX.click();renderQuests();openM('#mQuest')};
+$('#bQuest').onclick=()=>{ac();SFX.click();renderQuests();openM('#mQuest')};$('#bLevels').onclick=()=>{ac();SFX.click();renderLevels();openM('#mLevels')};$('#lvl').style.cursor='pointer';$('#lvl').onclick=()=>{ac();SFX.click();renderLevels();openM('#mLevels')};
 
 
 /* Mangeoire / Journal / Absence */
@@ -1003,7 +1055,9 @@ let mg=null,keys={};
 const MGS={
  bulles:{n:'∘° Pop les bulles',d:'20 secondes pour éclater un max de bulles. Les dorées valent 5 !'},
  memo:{n:'♢ Mémo-poissons',d:'Retrouve les paires de poissons en un minimum de coups.'},
- flocons:{n:'⋆ Festin de flocons',d:'Déplace ton poisson (souris, doigt ou flèches) pour attraper la nourriture. Évite les cailloux !'}
+ flocons:{n:'⋆ Festin de flocons',d:'Déplace ton poisson (souris, doigt ou flèches) pour attraper la nourriture. Évite les cailloux !'},
+ coucou:{n:'ʕ•ᴥ•ʔ Coucou Bernard',d:'Les bernard-l\'ermite sortent de leur trou : touche-les vite ! Le doré vaut 3. Attention aux poissons-ballons…'},
+ chant:{n:'♪ Chant des coquillages',d:'Écoute la mélodie des coquillages et rejoue-la. Elle s\'allonge à chaque tour !'}
 };
 function mgBg(){mx.setTransform(Q,0,0,Q,0,0);mx.imageSmoothingEnabled=false;const g=mx.createLinearGradient(0,0,0,MH);g.addColorStop(0,'#d4f4ff');g.addColorStop(1,'#8ccbea');mx.fillStyle=g;mx.fillRect(0,0,MW,MH);mx.fillStyle='#fff1d4';mx.fillRect(0,MH-6,MW,6)}
 function ring(x,y,r,col){mx.fillStyle=col;for(let a=0;a<6.283;a+=.25/r)mx.fillRect(q(x+Math.cos(a)*r),q(y+Math.sin(a)*r),.5,.5);mx.fillStyle='#fff';mx.fillRect(q(x-r/2),q(y-r/2),.5,.5)}
@@ -1023,7 +1077,7 @@ const MAKE={
    for(const q of this.b){q.y-=q.vy*dt;q.ph+=dt*3}this.b=this.b.filter(q=>q.y>-12&&!q.dead);for(const p of this.p)p.l-=dt;this.p=this.p.filter(p=>p.l>0)},
   draw(){mgBg();for(const q of this.b)ring(q.x+Math.sin(q.ph)*3,q.y,q.r,q.gold?'#e0b830':'#5aa8d6');for(const p of this.p)txt(mx,p.t,p.x,p.y-(1-p.l)*10,p.c,'center',7)},
   click(x,y){if(this.over)return;for(let i=this.b.length-1;i>=0;i--){const q=this.b[i],bx=q.x+Math.sin(q.ph)*3;if((x-bx)**2+(y-q.y)**2<=(q.r+4)**2){q.dead=true;const v=q.gold?5:1;this.score+=v;this.p.push({x:bx,y:q.y,t:'+'+v,c:q.gold?P.ye:P.wh,l:1});SFX.pop();return}}}}),
- memo:()=>{const sps=shuffle(SPECIES.filter(s=>(s.r==='c'||s.r==='u')&&!s.visitOnly&&tankOpen(s.hab)&&!s.sc)).slice(0,6);const cards=shuffle([...sps,...sps]).map(sp=>({sp,up:false,done:false}));
+ memo:()=>{const sps=shuffle(SPECIES.filter(s=>(s.r==='c'||s.r==='u')&&!s.visitOnly&&tankOpen(s.hab)&&lvOk(s)&&!s.sc)).slice(0,6);const cards=shuffle([...sps,...sps]).map(sp=>({sp,up:false,done:false}));
   return{cards,first:-1,second:-1,lock:0,moves:0,score:0,
   hud(){return '♢ Coups : '+this.moves+'   Paires : '+this.cards.filter(c=>c.done).length/2+'/6'},endTxt(){return this.moves+' coups'},
   box(i){const cols=MW<190?3:4,rows=12/cols,cx=i%cols,cy=Math.floor(i/cols),gw=cols*46-6,gh=rows*40-6,ox=Math.round((MW-gw)/2),oy=Math.max(4,Math.round((MH-6-gh)/2));return{x:ox+cx*46,y:oy+cy*40,w:40,h:34}},
@@ -1044,7 +1098,40 @@ const MAKE={
    this.f=this.f.filter(q=>q.y<MH&&!q.dead)},
   draw(){mgBg();for(const q of this.f){const X=Math.round(q.x*2)/2,Y=Math.round(q.y*2)/2;if(q.k==='rock'){mx.fillStyle=OUT;mx.fillRect(X-2,Y-1.5,4,3.5);mx.fillStyle=P.dk;mx.fillRect(X-1.5,Y-1.5,3,3);mx.fillStyle=P.lg;mx.fillRect(X-1,Y-1.5,1,.5)}else{mx.fillStyle=OUT;mx.fillRect(X-1.5,Y-1,3,2);mx.fillStyle=q.k==='gold'?'#e0b830':P.or;mx.fillRect(X-1,Y-1,2,1.5);mx.fillStyle=P.wh;mx.fillRect(X-.5,Y-1,.5,.5)}}
    const s=spr(this.pl,Math.floor(T*6)%2?'a':''),sc=this.pl.sc===3?.55:.8;mx.save();mx.translate(Math.round(this.px*2)/2,MH-23);if(this.dir<0)mx.scale(-1,1);mx.drawImage(s,-Math.floor(s.width*sc/2),-Math.floor(s.height*sc/2),s.width*sc,s.height*sc);if(S.acc[this.pl.id])drawAcc(mx,this.pl,tpx(this.pl)*sc*2*.5*2,s.width*sc,s.height*sc,S.acc[this.pl.id]);mx.restore()},
-  move(x){this.tx=x},click(x){this.tx=x}}}
+  move(x){this.tx=x},click(x){this.tx=x}}},
+ coucou:()=>{const KS={ber:byId.bernard,gold:byId.bernardor||byId.bernard,puf:byId.ballon||byId.bernard};return{time:25,score:0,sp:.5,p:[],h:Array.from({length:6},()=>({t:0,life:0,k:'ber',hit:false})),
+  hud(){return '◔ '+Math.ceil(Math.max(0,this.time))+'s   ʕ•ᴥ•ʔ '+this.score},endTxt(){return this.score+' points'},
+  cell(i){const cols=MW<190?2:3,rows=6/cols,cw=MW/cols,chh=(MH-8)/rows,cx=(i%cols)*cw+cw/2,top=Math.floor(i/cols)*chh;return{x:cx,y:top+chh*.78,w:Math.min(cw*.7,40),ch:chh}},
+  update(dt){if(this.over)return;this.time-=dt;if(this.time<=0){endMg(Math.round(this.score*1.4));return}const sp=.55+.45*this.time/25;
+   this.sp-=dt;if(this.sp<=0){this.sp=rand(.35,.75)*sp;const free=this.h.filter(o=>o.t<=0);if(free.length){const o=pick(free),r=Math.random();o.k=r<.1?'gold':r<.3?'puf':'ber';o.life=o.t=rand(.75,1.25)*sp+.25;o.hit=false}}
+   for(const o of this.h)if(o.t>0)o.t-=dt;for(const p of this.p)p.l-=dt;this.p=this.p.filter(p=>p.l>0)},
+  up(o){if(o.t<=0)return 0;const a=o.life-o.t;return Math.min(1,a/.14,o.t/.14)},
+  draw(){mgBg();this.h.forEach((o,i)=>{const c=this.cell(i),u=this.up(o),hw=c.w/2;
+    mx.fillStyle='#e8d2a8';mx.fillRect(c.x-hw-2,c.y-1,c.w+4,5);mx.fillStyle='#4a4266';mx.fillRect(c.x-hw+2,c.y-3,c.w-4,3);mx.fillStyle='#6d6190';mx.fillRect(c.x-hw+4,c.y-3,c.w-8,1);
+    if(u>0){const s=spr(KS[o.k],o.hit?'h':''),sc=Math.min(1,(c.w*1.1)/s.width,(c.ch*.7)/s.height),w=s.width*sc,h=s.height*sc;mx.save();mx.beginPath();mx.rect(c.x-hw-4,c.y-c.ch,c.w+8,c.ch-1.5);mx.clip();
+     mx.drawImage(s,q(c.x-w/2),q(c.y-1.5-h*u),w,h);if(o.k==='gold'){mx.fillStyle='#fff4b8';const tw=Math.floor(T*8)%2;mx.fillRect(q(c.x+w/2-2),q(c.y-h*u-2+tw),.5,2);mx.fillRect(q(c.x+w/2-2.75),q(c.y-h*u-1.25+tw),2,.5)}mx.restore()}
+    mx.fillStyle='#f3e3c4';mx.fillRect(c.x-hw-2,c.y-1.5,c.w+4,4);mx.fillStyle='#fffaf0';mx.fillRect(c.x-hw,c.y-1.5,c.w,.5);mx.fillStyle='#e0c89a';for(let k=0;k<4;k++)mx.fillRect(c.x-hw+2+k*(c.w/4),c.y+1,1,.5)});
+   for(const p of this.p)txt(mx,p.t,p.x,p.y-(1-p.l)*10,p.c,'center',7)},
+  click(x,y){if(this.over)return;for(let i=0;i<6;i++){const o=this.h[i],c=this.cell(i);if(o.t<=0||o.hit||this.up(o)<.35)continue;if(Math.abs(x-c.x)<c.w/2+3&&y<c.y+3&&y>c.y-c.ch*.85){o.hit=true;o.t=Math.min(o.t,.2);
+    if(o.k==='puf'){this.score=Math.max(0,this.score-2);SFX.bad();this.p.push({x:c.x,y:c.y-c.ch*.5,t:'-2',c:P.rd,l:1})}else{const v=o.k==='gold'?3:1;this.score+=v;SFX.pop();this.p.push({x:c.x,y:c.y-c.ch*.5,t:'+'+v,c:o.k==='gold'?P.ye:P.wh,l:1})}return}}}}},
+ chant:()=>({seq:[Math.floor(Math.random()*4)],si:0,pi:0,ph:'wait',t:.9,lit:-1,press:-1,pt:0,round:0,
+  cols:['#ff9ccc','#ffd34d','#7cc9ea','#8fdcb0'],dark:['#d9709f','#d9a51f','#4f9fc4','#5fb487'],notes:[523.25,659.25,783.99,1046.5],
+  hud(){return '♪ Tour '+(this.round+1)+'   '+(this.ph==='play'?'à toi !':'écoute…')},endTxt(){return this.round+' tour'+(this.round>1?'s':'')+' réussi'+(this.round>1?'s':'')},
+  box(i){const S0=Math.min((MW-18)/2,(MH-20)/2),ox=(MW-2*S0-6)/2,oy=(MH-6-2*S0-6)/2;return{x:ox+(i%2)*(S0+6),y:oy+Math.floor(i/2)*(S0+6),s:S0}},
+  play(i){tone(this.notes[i],.32,'triangle',.07,0,0)},
+  update(dt){if(this.over)return;if(this.pt>0)this.pt-=dt;
+   if(this.ph==='wait'){this.t-=dt;if(this.t<=0){this.ph='show';this.si=0;this.t=.1;this.lit=-1}}
+   else if(this.ph==='show'){this.t-=dt;if(this.t<=0){const sp=Math.max(.24,.5-this.round*.02);if(this.lit>=0){this.lit=-1;this.t=sp*.4}else if(this.si<this.seq.length){this.lit=this.seq[this.si++];this.play(this.lit);this.t=sp}else{this.ph='play';this.pi=0}}}},
+  draw(){mgBg();for(let i=0;i<4;i++){const b=this.box(i),on=this.lit===i||(this.press===i&&this.pt>0);mx.fillStyle=OUT;mx.fillRect(b.x-1,b.y-1,b.s+2,b.s+2);
+    mx.fillStyle=on?'#ffffff':this.cols[i];mx.fillRect(b.x,b.y,b.s,b.s);if(on){mx.fillStyle=this.cols[i];mx.fillRect(b.x+2,b.y+2,b.s-4,b.s-4)}
+    const cx=b.x+b.s/2,cy=b.y+b.s*.55,r=b.s*.28;mx.fillStyle=on?'#fffaf0':this.dark[i];
+    for(let k=-2;k<=2;k++){const a=-Math.PI/2+k*.42;for(let d=r*.25;d<r;d+=.5)mx.fillRect(q(cx+Math.cos(a)*d),q(cy+Math.sin(a)*d),.5,.5)}
+    for(let a=-Math.PI*.95;a<=-Math.PI*.05;a+=.04)mx.fillRect(q(cx+Math.cos(a)*r),q(cy+Math.sin(a)*r),.5,.5);mx.fillRect(q(cx-r*.35),q(cy),r*.7,1)}
+   if(this.ph!=='play'&&!this.over)txt(mx,'♪',MW/2,MH/2-6,P.wh,'center',8)},
+  click(x,y){if(this.over||this.ph!=='play')return;const i=[0,1,2,3].find(k=>{const b=this.box(k);return x>=b.x&&x<=b.x+b.s&&y>=b.y&&y<=b.y+b.s});if(i===undefined)return;
+   this.press=i;this.pt=.22;this.play(i);
+   if(i!==this.seq[this.pi]){SFX.bad();this.ph='end';endMg(Math.min(90,this.round*8));return}
+   this.pi++;if(this.pi>=this.seq.length){this.round++;SFX.catch();this.seq.push(Math.floor(Math.random()*4));this.ph='wait';this.t=.8}}})
 };
 mc.addEventListener('pointerdown',e=>{ac();if(!mg)return;const p=cpos(e,mc,MW,MH);mg.click&&mg.click(p.x,p.y)});
 mc.addEventListener('pointermove',e=>{if(!mg||!mg.move)return;const p=cpos(e,mc,MW,MH);mg.move(p.x)});

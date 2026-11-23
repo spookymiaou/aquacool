@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="AquaCool">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=DotGothic16&family=M+PLUS+Rounded+1c:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=14">
+<link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 <div id="wrap"><canvas id="game"></canvas><canvas id="gtxt"></canvas>
@@ -32,6 +32,7 @@
       <button class="bub" id="bJournal"><span class="ic bubble">✎</span><span class="lb">Journal</span></button>
       <button class="bub" id="bDress"><span class="ic bubble">♡</span><span class="lb">Dressing</span></button>
       <button class="bub" id="bQuest"><span class="ic bubble">☆</span><span class="lb">Quêtes</span></button>
+      <button class="bub" id="bLevels"><span class="ic bubble">✪</span><span class="lb">Niveaux</span></button>
       <button class="bub" id="bShop"><span class="ic bubble">¥</span><span class="lb">Boutique</span></button>
       <button class="bub" id="bDeco"><span class="ic bubble">❀</span><span class="lb">Déco</span></button>
       <button class="bub" id="bMg"><span class="ic bubble">✦</span><span class="lb">Mini-jeux</span></button>
@@ -57,6 +58,8 @@
 <div class="modal" id="mFood"><div class="box"><div class="head"><h2>◒ Mangeoire</h2><button class="btn" data-close>✕</button></div><div id="foodBody"></div></div></div>
 <div class="modal" id="mJournal"><div class="box"><div class="head"><h2>✎ Journal des visites</h2><button class="btn" data-close>✕</button></div><div id="journalBody"></div></div></div>
 <div class="modal" id="mAway"><div class="box"><div class="head"><h2 id="awayTitle">☾ Pendant ton absence…</h2><button class="btn" data-close>✕</button></div><div id="awayBody"></div></div></div>
+<div class="modal" id="mLevels"><div class="box"><div class="head"><h2>✪ Chemin des niveaux</h2><button class="btn" data-close>✕</button></div><div id="levelsBody"></div></div></div>
+<div class="modal" id="mLvUp"><div class="box lvup"><div id="lvUpBody"></div></div></div>
 <div class="modal" id="mQuest"><div class="box"><div class="head"><h2>☆ Quêtes du jour</h2><button class="btn" data-close>✕</button></div><div id="questBody"></div></div></div>
 <div class="modal" id="mShop"><div class="box"><div class="head"><h2>¥ Boutique — <span id="shopCoins" class="price"></span></h2><button class="btn" data-close>✕</button></div>
   <div class="tabs"><button class="btn sm" data-tab="deco">❀ Déco</button><button class="btn sm g" data-tab="up">✧ Améliorations</button><button class="btn sm y" data-tab="toy">ʕ•ᴥ•ʔ Jouets</button><button class="btn sm p" data-tab="th">☁ Fonds</button></div>
@@ -70,7 +73,7 @@
     <li>໒꒱ <b>Clique sur les poissons</b> pour les attraper et remplir ta collection (+ expérience).</li>
     <li>↔ <b>Glisse</b> le doigt (ou la souris, la molette, les flèches du clavier) pour explorer : le Ruisseau, puis le Récif, puis les Abysses, tout dans le même aquarium. La mini-carte en bas montre où sont les poissons, et une flèche clignote si un rare est hors de l'écran.</li>
     <li>☰ Tout le reste (collection, mangeoire, boutique…) est dans le <b>menu en haut à gauche</b>.</li>
-    <li>☆ Monte de <b>niveau</b> pour ouvrir de nouvelles zones de l'aquarium : le <b>Récif</b> (niv. 3) et les <b>Abysses</b> (niv. 6), chacune avec ses propres poissons. De la déco et des fonds se débloquent aussi.</li>
+    <li>☆ Monte de <b>niveau</b> pour ouvrir de nouvelles zones de l'aquarium : le <b>Récif</b> (niv. 3) et les <b>Abysses</b> (niv. 9), chacune avec ses propres poissons. De la déco et des fonds se débloquent aussi.</li>
     <li>☆ Chaque jour, <b>3 quêtes</b> te rapportent pièces et expérience.</li>
     <li>☾ Certains poissons n'apparaissent qu'à des <b>jours et heures précis</b> (la vraie heure de ton appareil). Les indices sont dans ✿ Collection.</li>
     <li>♡ Certains poissons ne viennent que si le bac a la bonne déco.</li>
@@ -97,7 +100,7 @@
   <p class="inst-note">✧ Ta partie reste sur ce téléphone. Si tu supprimes l'appli, ta partie est effacée.</p>
   <div class="row"><button class="btn p" data-close>J'ai compris !</button></div></div></div>
 
-<script src="script.js?v=14"></script>
+<script src="script.js?v=18"></script>
 <script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}</script>
 <script data-goatcounter="https://spookymiaou.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
